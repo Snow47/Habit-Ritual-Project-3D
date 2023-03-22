@@ -19,8 +19,12 @@ public class PlayerMotor : MonoBehaviour
 
     [Header("Move Variables")]
     // How fast the player moves
-    [SerializeField, Tooltip("How fast the player moves when walking")]
-    private float _moveSpeed = 3.0f;
+    [SerializeField, Tooltip("Player max speed")]
+    private float _moveSpeed = 8.0f;
+    [SerializeField, Tooltip("How fast the player moves")]
+    private float _groundAccel = 200.0f, _airAccel = 50.0f;
+    [SerializeField]
+    private float _groundFriction = 12.0f, _airFriction = 3.0f;
     [SerializeField]
     private float _jumpHeight = 1.5f;
     // SnapDist is for a raycast so the player will smoothly slide down ramps
@@ -45,7 +49,7 @@ public class PlayerMotor : MonoBehaviour
 
     // Only needed if you need to access the head from another script and don't want to assign to there as well
     public Transform Head => _head;
-    public float MoveSpeed { set => _moveSpeed = value; }
+    public float MoveSpeed { set => _groundAccel = value; }
     public float MouseSenMod { set => _mouseSenMod = value; }
 
     private float SnapDist => (_controller.height / 2.0f) + _snapDist;
@@ -60,7 +64,7 @@ public class PlayerMotor : MonoBehaviour
     }
 
     // Important for falling
-    private float _yVel = 0.0f;
+    //private float _yVel = 0.0f;
     // For ground snapping
     private bool _wasGrounded = false;
     private bool _jumpWish = false;
@@ -109,26 +113,48 @@ public class PlayerMotor : MonoBehaviour
     private void Move()
     {
         // Grab the movement inputs and normalize them to avoid having diagonal movement faster than orthogonal
-        Vector3 vel = _inputMap["Move"].ReadValue<Vector2>();
-        vel.z = vel.y;
-        vel.y = 0;
+        Vector3 vel = _controller.velocity;
 
-        print(vel);
-
-        // This augements the vector to be relative to the player (so if you press 'forward' it moves in the same direction as transform.forward), and multiply it by moveSpeed
-        vel = transform.TransformDirection(vel) * _moveSpeed;
 
         // Apply gravity to yVel then assign it to vel
         if (_jumpWish)
         {
             _jumpWish = false;
 
-            _yVel += Mathf.Sqrt(-2.0f * EffectiveGravity.y * _jumpHeight);
+            vel.y += Mathf.Sqrt(-2.0f * EffectiveGravity.y * _jumpHeight);
             _wasGrounded = false;
         }
-        _yVel += EffectiveGravity.y * Time.deltaTime;
+        vel.y += EffectiveGravity.y * Time.deltaTime;
 
-        vel.y += _yVel;
+        float effectiveAccel = (_wasGrounded ? _groundAccel : _airAccel);
+        float effectiveFriction = (_wasGrounded ? _groundFriction : _airFriction);
+
+        // Friction
+        float keepY = vel.y;
+        vel.y = 0.0f; // don't consider vertical movement in friction calculation
+        float prevSpeed = vel.magnitude;
+        if (prevSpeed != 0)
+        {
+            float frictionAccel = prevSpeed * effectiveFriction * Time.deltaTime;
+            vel *= Mathf.Max(prevSpeed - frictionAccel, 0) / prevSpeed;
+        }
+        vel.y = keepY;
+
+        // Input
+        Vector3 moveWish = _inputMap["Move"].ReadValue<Vector2>();
+        moveWish.z = moveWish.y;
+        moveWish.y = 0;
+        moveWish = transform.TransformDirection(moveWish).normalized;
+
+        float velocityProj = Vector3.Dot(vel, moveWish);
+        float accelMag = effectiveAccel * Time.deltaTime;
+        // clamp projection onto movement vector
+        if (velocityProj + accelMag > _moveSpeed)
+        {
+            accelMag = _moveSpeed - velocityProj;
+        }
+
+        vel += moveWish * accelMag;
 
         // This is will move the player while respecting collision, it will collide with walls and the floor, go up ramps (depending on the angle), and go up steps (depending on step height) 
         _controller.Move(vel * Time.deltaTime);
@@ -141,7 +167,6 @@ public class PlayerMotor : MonoBehaviour
         // If you are grounded reset yVel and set wasGrounded for next frame
         if (_controller.isGrounded)
         {
-            _yVel = 0.0f;
             _wasGrounded = true;
             return;
         }
@@ -158,8 +183,6 @@ public class PlayerMotor : MonoBehaviour
 
             _controller.Move(Vector3.down * snapAmount);
 
-            // Reset yVel
-            _yVel = 0.0f;
             return;
         }
 
