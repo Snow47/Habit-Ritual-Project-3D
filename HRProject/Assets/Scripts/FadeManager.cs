@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,16 +11,16 @@ public class FadeManager : MonoBehaviour
 
     private Timer _fadeLength = new Timer(0.5f);
 
-    public void FadeIn()
+    public void FadeIn(Action callback)
     {
-        StartCoroutine(PerformFade(true));
+        StartCoroutine(PerformFade(true, callback));
     }
-    public void FadeOut()
+    public void FadeOut(Action callback)
     {
-        StartCoroutine(PerformFade(false));
+        StartCoroutine(PerformFade(false, callback));
     }
 
-    private IEnumerator PerformFade(bool fadeIn)
+    private IEnumerator PerformFade(bool fadeIn, Action callback)
     {
         Color tmpColor = fadeImage.color;
 
@@ -37,5 +38,7 @@ public class FadeManager : MonoBehaviour
 
         if (fadeIn)
             fadeImage.gameObject.SetActive(false);
+
+        callback.Invoke();
     }
 }

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
@@ -10,9 +11,17 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private Vector3 _startPoint;
     [SerializeField]
+    private Quaternion _startRotation;
+    [SerializeField]
+    private FadeManager _fadeManager;
+    [SerializeField]
     private int _stageCount = 10;
     [SerializeField]
     private Timer _stageTimer = new Timer(90);
+
+    [Space(10)]
+    [SerializeField]
+    private TMP_Text _timerText;
 
     private int _currentStage = 1;
     private bool _timerActive = false;
@@ -28,23 +37,26 @@ public class GameManager : MonoBehaviour
         {
             if (_stageTimer.Check())
             {
-                // Game Over
+                // TODO: Game Over
             }
         }
 
-        // Timer UI Element
+        if (_timerText != null)
+            _timerText.text = _stageTimer.AmountRemaining.ToString("m:ss");
     }
 
     private void InitStage()
     {
         _stageTimer.Reset();
+        _player.transform.position = _startPoint;
+        _player.transform.rotation = _startRotation;
         StartCoroutine(LoadSceneAsync());
     }
     public void EndStage()
     {
         _timerActive = false;
-        // Fade Out
-        StartCoroutine(UnloadSceneAsync());
+        _player.LockPlayer = true;
+        _fadeManager.FadeOut(Unload);
     }
 
     private IEnumerator LoadSceneAsync()
@@ -55,7 +67,8 @@ public class GameManager : MonoBehaviour
         {
             yield return null;
         }
-        StartStage();
+
+        StartFade();
     }
     private IEnumerator UnloadSceneAsync()
     {
@@ -69,16 +82,25 @@ public class GameManager : MonoBehaviour
         StageComplete();
     }
 
+    private void StartFade()
+    {
+        _fadeManager.FadeIn(StartStage);
+    }
+    private void Unload()
+    {
+        StartCoroutine(UnloadSceneAsync());
+    }
+
     private void StartStage()
     {
-        // Fade In
         _timerActive = true;
+        _player.LockPlayer = false;
     }
     private void StageComplete()
     {
         if (_currentStage == _stageCount)
         {
-            // Game Complete
+            // TODO: Game Complete
         }
 
         ++_currentStage;
