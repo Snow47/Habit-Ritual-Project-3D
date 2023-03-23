@@ -105,6 +105,9 @@ public class PlayerMotor : MonoBehaviour
 
     private void Start()
     {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
         // Set the rotation offsets
         _rotOffset = transform.rotation;
         _rotOffsetHead = _head.transform.localRotation;
