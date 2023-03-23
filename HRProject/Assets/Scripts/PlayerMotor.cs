@@ -74,6 +74,11 @@ public class PlayerMotor : MonoBehaviour
     public Transform Head => _head;
     public float MoveSpeed { set => _groundAccel = value; }
     public float MouseSenMod { set => _mouseSenMod = value; }
+    public bool LockPlayer 
+    { 
+        get => _lockplayerController; 
+        set => _lockplayerController = value; 
+    }
 
     private float SnapDist => (_controller.height / 2.0f) + _snapDist;
     private Vector3 EffectiveGravity
@@ -138,7 +143,6 @@ public class PlayerMotor : MonoBehaviour
     {
         // Grab the movement inputs and normalize them to avoid having diagonal movement faster than orthogonal
         Vector3 vel = _controller.velocity;
-
         // Apply gravity to yVel then assign it to vel
         if (_jumpWish)
         {
