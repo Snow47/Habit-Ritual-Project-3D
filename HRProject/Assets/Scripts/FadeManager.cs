@@ -8,7 +8,7 @@ public class FadeManager : MonoBehaviour
 {
     [SerializeField]
     private Image fadeImage = null;
-
+    [SerializeField]
     private Timer _fadeLength = new Timer(0.5f);
 
     public void FadeIn(Action callback)

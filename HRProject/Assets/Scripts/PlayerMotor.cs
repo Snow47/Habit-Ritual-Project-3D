@@ -7,7 +7,8 @@ public class PlayerMotor : MonoBehaviour
     {
         Grounded,
         InAir,
-        WallRide
+        WallRide,
+        Sliding
     }
 
     // The CharacterController simply moves the player with repects to collision, this is Kinematic Movement as it will collide with objects but not react to forces

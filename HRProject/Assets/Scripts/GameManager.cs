@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
+using System;
 
 public class GameManager : MonoBehaviour
 {
@@ -15,7 +16,7 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private FadeManager _fadeManager;
     [SerializeField]
-    private int _stageCount = 10;
+    private Counter _stageCount = new Counter(10);
     [SerializeField]
     private Timer _stageTimer = new Timer(90);
 
@@ -23,14 +24,13 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private TMP_Text _timerText;
 
-    private int _currentStage = 1;
     private bool _timerActive = false;
 
     private void Start()
     {
+        _stageCount.Reset(1);
         InitStage();
     }
-
     private void Update()
     {
         if (_timerActive)
@@ -42,7 +42,12 @@ public class GameManager : MonoBehaviour
         }
 
         if (_timerText != null)
-            _timerText.text = _stageTimer.AmountRemaining.ToString("m:ss");
+        {
+            int mins = (int)_stageTimer.AmountRemaining / 60;
+            int secs = (int)_stageTimer.AmountRemaining % 60;
+
+            _timerText.text = (mins > 0 ? mins.ToString() + ":" : "") + secs.ToString("00");
+        }
     }
 
     private void InitStage()
@@ -61,7 +66,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator LoadSceneAsync()
     {
-        AsyncOperation loading = SceneManager.LoadSceneAsync($"Stage{_currentStage}Scene", LoadSceneMode.Additive);
+        AsyncOperation loading = SceneManager.LoadSceneAsync($"Stage{(int)_stageCount.Cur}Scene", LoadSceneMode.Additive);
 
         while (!loading.isDone)
         {
@@ -72,7 +77,7 @@ public class GameManager : MonoBehaviour
     }
     private IEnumerator UnloadSceneAsync()
     {
-        AsyncOperation loading = SceneManager.UnloadSceneAsync($"Stage{_currentStage}Scene");
+        AsyncOperation loading = SceneManager.UnloadSceneAsync($"Stage{(int)_stageCount.Cur}Scene");
 
         while (!loading.isDone)
         {
@@ -98,12 +103,10 @@ public class GameManager : MonoBehaviour
     }
     private void StageComplete()
     {
-        if (_currentStage == _stageCount)
+        if (_stageCount.Check())
         {
             // TODO: Game Complete
         }
-
-        ++_currentStage;
 
         InitStage();
     }
