@@ -3,6 +3,13 @@ using UnityEngine.InputSystem;
 
 public class PlayerMotor : MonoBehaviour
 {
+    private enum PlayerState
+    {
+        Grounded,
+        InAir,
+        WallRide
+    }
+
     // The CharacterController simply moves the player with repects to collision, this is Kinematic Movement as it will collide with objects but not react to forces
     [SerializeField, Tooltip("This is the player's \"body\", it does the moving while respecting collision")]
     private CharacterController _controller;
@@ -21,12 +28,28 @@ public class PlayerMotor : MonoBehaviour
     // How fast the player moves
     [SerializeField, Tooltip("Player max speed")]
     private float _moveSpeed = 8.0f;
-    [SerializeField, Tooltip("How fast the player moves")]
-    private float _groundAccel = 200.0f, _airAccel = 50.0f;
-    [SerializeField]
-    private float _groundFriction = 12.0f, _airFriction = 3.0f;
     [SerializeField]
     private float _jumpHeight = 1.5f;
+
+    [Space(10)]
+    [SerializeField, Tooltip("How fast the player moves")]
+    private float _groundAccel = 200.0f;
+    [SerializeField, Tooltip("How fast the player moves")]
+    private float _airAccel = 50.0f;
+
+    [Space(10)]
+    [SerializeField]
+    private float _groundFriction = 12.0f;
+    [SerializeField]
+    private float _airFriction = 3.0f;
+
+    [Space(10)]
+    [SerializeField]
+    private float _wallRideStick = 0.5f;
+    [SerializeField, Range(0.0f, 1.0f)]
+    private float _wallLaunchScale = 0.5f;
+
+    [Space(10)]
     // SnapDist is for a raycast so the player will smoothly slide down ramps
     [SerializeField, Tooltip("When the player stops touching the ground for a frame they will attempt to snap to any object that is this many units below theeir feet")]
     private float _snapDist = .5f;
@@ -63,6 +86,8 @@ public class PlayerMotor : MonoBehaviour
         }
     }
 
+    private PlayerState _currentState = PlayerState.Grounded;
+
     // Important for falling
     //private float _yVel = 0.0f;
     // For ground snapping
@@ -76,6 +101,8 @@ public class PlayerMotor : MonoBehaviour
     // Without these the player rotation will always snap to (0, 0, 0)
     private Quaternion _rotOffset, _rotOffsetHead;
 
+    private Vector3 _wallNormal;
+
     private void Start()
     {
         // Set the rotation offsets
@@ -85,12 +112,6 @@ public class PlayerMotor : MonoBehaviour
         _mouseSenMod = PlayerPrefs.GetFloat("Player.LookSensitivity", 1.0f);
 
         _inputMap["Jump"].performed += AttemptJump;
-    }
-
-    private void Update()
-    {
-        //if (Input.GetButtonDown("Jump") && _controller.isGrounded)
-        //    _jumpWish = true;
     }
 
     private void FixedUpdate()
@@ -104,7 +125,7 @@ public class PlayerMotor : MonoBehaviour
 
     private void AttemptJump(InputAction.CallbackContext context)
     {
-        if (!_controller.isGrounded)
+        if (_currentState == PlayerState.InAir)
             return;
 
         _jumpWish = true;
@@ -115,17 +136,22 @@ public class PlayerMotor : MonoBehaviour
         // Grab the movement inputs and normalize them to avoid having diagonal movement faster than orthogonal
         Vector3 vel = _controller.velocity;
 
-
         // Apply gravity to yVel then assign it to vel
         if (_jumpWish)
         {
             _jumpWish = false;
 
-            vel.y += Mathf.Sqrt(-2.0f * EffectiveGravity.y * _jumpHeight);
+            float jump = Mathf.Sqrt(-2.0f * EffectiveGravity.y * _jumpHeight);
+            vel.y = jump;
+
+            if(_currentState == PlayerState.WallRide)
+                vel += _wallNormal * (jump * _wallLaunchScale);
+
+            _currentState = PlayerState.InAir;
             _wasGrounded = false;
         }
-        vel.y += EffectiveGravity.y * Time.deltaTime;
-
+        vel.y += EffectiveGravity.y * Time.deltaTime * (_currentState == PlayerState.WallRide && vel.y < 0.0f ? _wallRideStick : 1.0f);
+        
         float effectiveAccel = (_wasGrounded ? _groundAccel : _airAccel);
         float effectiveFriction = (_wasGrounded ? _groundFriction : _airFriction);
 
@@ -155,17 +181,28 @@ public class PlayerMotor : MonoBehaviour
         }
 
         vel += moveWish * accelMag;
-
         // This is will move the player while respecting collision, it will collide with walls and the floor, go up ramps (depending on the angle), and go up steps (depending on step height) 
         _controller.Move(vel * Time.deltaTime);
 
+        if ((_controller.collisionFlags & CollisionFlags.Below) != 0)
+            _currentState = PlayerState.Grounded;
+        else if ((_controller.collisionFlags & CollisionFlags.Sides) != 0)
+            _currentState = PlayerState.WallRide;
+
         GroundCheck();
+    }
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        if (_currentState != PlayerState.WallRide)
+            return;
+
+        _wallNormal = hit.normal;
     }
 
     private void GroundCheck()
     {
         // If you are grounded reset yVel and set wasGrounded for next frame
-        if (_controller.isGrounded)
+        if (_currentState == PlayerState.Grounded)
         {
             _wasGrounded = true;
             return;
@@ -182,10 +219,12 @@ public class PlayerMotor : MonoBehaviour
             snapAmount /= Time.deltaTime;
 
             _controller.Move(Vector3.down * snapAmount);
-
+            _currentState = PlayerState.Grounded;
             return;
         }
 
+        if (_currentState != PlayerState.WallRide)
+            _currentState = PlayerState.InAir;
         // Set wasGrounded for next frame
         _wasGrounded = false;
     }
