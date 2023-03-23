@@ -158,7 +158,11 @@ public class PlayerMotor : MonoBehaviour
             _currentState = PlayerState.InAir;
             _wasGrounded = false;
         }
-        vel.y += EffectiveGravity.y * Time.deltaTime * (_currentState == PlayerState.WallRide && vel.y < 0.0f ? _wallRideStick : 1.0f);
+
+        if (_currentState == PlayerState.WallRide)
+            vel.y = EffectiveGravity.y * _wallRideStick * Time.deltaTime;
+        else
+            vel.y += EffectiveGravity.y * Time.deltaTime;
         
         float effectiveAccel = (_wasGrounded ? _groundAccel : _airAccel);
         float effectiveFriction = (_wasGrounded ? _groundFriction : _airFriction);
