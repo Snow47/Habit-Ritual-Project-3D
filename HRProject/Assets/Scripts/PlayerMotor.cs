@@ -48,9 +48,9 @@ public class PlayerMotor : MonoBehaviour
 
     [Space(10)]
     [SerializeField]
-    private float _wallRideStick = 0.5f;
+    private float _wallClingStrength = 0.5f;
     [SerializeField, Range(0.0f, 1.0f)]
-    private float _wallLaunchScale = 0.5f;
+    private float _wallLaunchStrength = 0.5f;
 
     [Space(10)]
     // SnapDist is for a raycast so the player will smoothly slide down ramps
@@ -223,7 +223,7 @@ public class PlayerMotor : MonoBehaviour
             vel.y = jump;
 
             if(_currentState == PlayerState.WallRide)
-                vel += _wallNormal * (jump * _wallLaunchScale);
+                vel += _wallNormal * (jump * _wallLaunchStrength);
 
             _currentState = PlayerState.InAir;
             _wasGrounded = false;
@@ -231,7 +231,7 @@ public class PlayerMotor : MonoBehaviour
 
         // GRAVITY
         if (_currentState == PlayerState.WallRide)
-            vel.y = EffectiveGravity.y * _wallRideStick * Time.deltaTime;
+            vel.y = EffectiveGravity.y * _wallClingStrength;
         else
             vel.y += EffectiveGravity.y * Time.deltaTime;
         
