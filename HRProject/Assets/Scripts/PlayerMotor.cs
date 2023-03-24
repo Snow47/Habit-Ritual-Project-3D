@@ -31,6 +31,8 @@ public class PlayerMotor : MonoBehaviour
     private float _moveSpeed = 8.0f;
     [SerializeField]
     private float _jumpHeight = 1.5f;
+    [SerializeField]
+    private float _slideStrength = 1.2f;
 
     [Space(10)]
     [SerializeField, Tooltip("How fast the player moves")]
@@ -71,6 +73,10 @@ public class PlayerMotor : MonoBehaviour
     [SerializeField, Tooltip("How far up (y) and down (x) they player can look")]
     private Vector2 _vertLookExtents = new Vector2(-70.0f, 70.0f);
 
+    [Space(10)]
+    [SerializeField]
+    private bool _debug = false;
+
     // Only needed if you need to access the head from another script and don't want to assign to there as well
     public Transform Head => _head;
     public float MoveSpeed { set => _groundAccel = value; }
@@ -91,6 +97,7 @@ public class PlayerMotor : MonoBehaviour
             return g;
         }
     }
+    private float SlideHeight => _controller.radius * 2;
 
     private PlayerState _currentState = PlayerState.Grounded;
 
@@ -109,6 +116,9 @@ public class PlayerMotor : MonoBehaviour
 
     private Vector3 _wallNormal;
 
+    private float _height;
+    private float _headHeight;
+
     private void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
@@ -116,11 +126,15 @@ public class PlayerMotor : MonoBehaviour
 
         // Set the rotation offsets
         _rotOffset = transform.rotation;
-        _rotOffsetHead = _head.transform.localRotation;
+        _rotOffsetHead = _head.localRotation;
+        _height = _controller.height;
+        _headHeight = _head.localPosition.y;
 
         _mouseSenMod = PlayerPrefs.GetFloat("Player.LookSensitivity", 1.0f);
 
         _inputMap["Jump"].performed += AttemptJump;
+        _inputMap["Slide"].started += AttemptSlide;
+        _inputMap["Slide"].canceled += AttemptSlideEnd;
     }
 
     private void FixedUpdate()
@@ -137,14 +151,70 @@ public class PlayerMotor : MonoBehaviour
         if (_currentState == PlayerState.InAir)
             return;
 
+        if (_currentState == PlayerState.Sliding)
+            AttemptSlideEnd(context);
+
         _jumpWish = true;
+    }
+    private void AttemptSlide(InputAction.CallbackContext context)
+    {
+        if (_currentState != PlayerState.Grounded)
+            return;
+
+        // Begin slide
+        _currentState = PlayerState.Sliding;
+
+        // Adjust heights
+        _controller.height = SlideHeight;
+        Vector3 tmpHead = _head.localPosition;
+        tmpHead.y = _headHeight - (_height - SlideHeight);
+        _head.localPosition = tmpHead;
+
+        // Snap down
+        float snapAmount = _height - SlideHeight;
+        _controller.center += Vector3.down * (snapAmount / 2.0f);
+
+        // Kick
+        Vector3 vel = _controller.velocity;
+
+        float keepY = vel.y;
+        vel.y = 0;
+
+        vel *= _slideStrength;
+        vel.y = keepY;
+
+        _controller.Move(vel * Time.deltaTime);
+    }
+    private void AttemptSlideEnd(InputAction.CallbackContext context)
+    {
+        if (_currentState != PlayerState.Sliding)
+            return;
+
+        // End Slide
+        // Adjust heights
+        _controller.height = _height;
+        Vector3 tmpHead = _head.localPosition;
+        tmpHead.y = _headHeight;
+        _head.localPosition = tmpHead;
+
+        // Snap up
+        float snapAmount = _height - SlideHeight;
+        _controller.center += Vector3.up * (snapAmount / 2.0f);
+
+        // Change flag
+        if ((_controller.collisionFlags & CollisionFlags.Below) != 0)
+            _currentState = PlayerState.Grounded;
+        else if ((_controller.collisionFlags & CollisionFlags.Sides) != 0)
+            _currentState = PlayerState.WallRide;
+        else
+            _currentState = PlayerState.InAir;
     }
 
     private void Move()
     {
-        // Grab the movement inputs and normalize them to avoid having diagonal movement faster than orthogonal
         Vector3 vel = _controller.velocity;
-        // Apply gravity to yVel then assign it to vel
+
+        // JUMP
         if (_jumpWish)
         {
             _jumpWish = false;
@@ -159,15 +229,27 @@ public class PlayerMotor : MonoBehaviour
             _wasGrounded = false;
         }
 
+        // GRAVITY
         if (_currentState == PlayerState.WallRide)
             vel.y = EffectiveGravity.y * _wallRideStick * Time.deltaTime;
         else
             vel.y += EffectiveGravity.y * Time.deltaTime;
         
-        float effectiveAccel = (_currentState != PlayerState.InAir ? _groundAccel : _airAccel);
-        float effectiveFriction = (_currentState != PlayerState.InAir ? _groundFriction : _airFriction);
+        float effectiveFriction;
+        switch (_currentState)
+        {
+            default:
+            case PlayerState.WallRide:
+            case PlayerState.Grounded:
+                effectiveFriction = _groundFriction;
+                break;
+            case PlayerState.Sliding:
+            case PlayerState.InAir:
+                effectiveFriction = _airFriction;
+                break;
+        }
 
-        // Friction
+        // FRICTION
         float keepY = vel.y;
         vel.y = 0.0f; // don't consider vertical movement in friction calculation
         float prevSpeed = vel.magnitude;
@@ -178,38 +260,52 @@ public class PlayerMotor : MonoBehaviour
         }
         vel.y = keepY;
 
-        // Input
-        Vector3 moveWish = _inputMap["Move"].ReadValue<Vector2>();
-        moveWish.z = moveWish.y;
-        moveWish.y = 0;
-        moveWish = transform.TransformDirection(moveWish).normalized;
-
-        float velocityProj = Vector3.Dot(vel, moveWish);
-        float accelMag = effectiveAccel * Time.deltaTime;
-        // clamp projection onto movement vector
-        if (velocityProj + accelMag > _moveSpeed)
+        // INPUT
+        if(_currentState != PlayerState.Sliding)
         {
-            accelMag = _moveSpeed - velocityProj;
+            Vector3 moveWish = _inputMap["Move"].ReadValue<Vector2>();
+
+            // If the player is actually attempting to move
+            if(moveWish != Vector3.zero)
+            {
+                // Get the variables on pointing the right way
+                moveWish.z = moveWish.y;
+                moveWish.y = 0;
+                moveWish = transform.TransformDirection(moveWish).normalized;
+
+                // Check for speed cap
+                float velocityProj = Vector3.Dot(vel, moveWish);
+                float effectiveAccel = _currentState != PlayerState.InAir ? _groundAccel : _airAccel;
+                float accelMag = effectiveAccel * Time.deltaTime;
+                // Clamp projection onto movement vector
+                if (velocityProj + accelMag > _moveSpeed)
+                {
+                    accelMag = _moveSpeed - velocityProj;
+                }
+
+                // Apply movement
+                vel += moveWish * accelMag;
+            }
         }
 
-        vel += moveWish * accelMag;
-        // This is will move the player while respecting collision, it will collide with walls and the floor, go up ramps (depending on the angle), and go up steps (depending on step height) 
+        // MOVE
         _controller.Move(vel * Time.deltaTime);
 
-        if ((_controller.collisionFlags & CollisionFlags.Below) != 0)
-            _currentState = PlayerState.Grounded;
-        else if ((_controller.collisionFlags & CollisionFlags.Sides) != 0)
-            _currentState = PlayerState.WallRide;
-        else
-            _currentState = PlayerState.InAir;
+        // SET STATE
+        if(_currentState != PlayerState.Sliding)
+        {
+            if ((_controller.collisionFlags & CollisionFlags.Below) != 0)
+                _currentState = PlayerState.Grounded;
+            else if ((_controller.collisionFlags & CollisionFlags.Sides) != 0)
+                _currentState = PlayerState.WallRide;
+            else
+                _currentState = PlayerState.InAir;
+        }
 
         GroundCheck();
     }
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
-        if (_currentState != PlayerState.WallRide)
-            return;
-
         _wallNormal = hit.normal;
     }
 
@@ -223,17 +319,20 @@ public class PlayerMotor : MonoBehaviour
         }
 
         // If the player is not grounded but was last frame do a Raycast and if it hits something snap to that thing
-        if (_wasGrounded && Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, SnapDist))
+        if (_wasGrounded && _currentState != PlayerState.Sliding && Physics.Raycast(transform.position + _controller.center, Vector3.down, out RaycastHit hit, SnapDist))
         {
             // Get the distance you have to travel to be snapped to the ground
-            float snapAmount = Vector3.Distance(hit.point, transform.position);
+            float snapAmount = Vector3.Distance(hit.point, transform.position + _controller.center);
             // Ignore half the height as the Raycast shoots from the center of the player
             snapAmount -= _controller.height / 2.0f;
             // Convert the amount you have to move movement to a velocity scaler
             snapAmount /= Time.deltaTime;
 
             _controller.Move(Vector3.down * snapAmount);
-            _currentState = PlayerState.Grounded;
+
+            //if(_currentState != PlayerState.Sliding)
+                _currentState = PlayerState.Grounded;
+
             return;
         }
 
@@ -275,5 +374,15 @@ public class PlayerMotor : MonoBehaviour
     private void OnDisable()
     {
         _inputMap.Disable();
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (!_debug)
+            return;
+
+        Gizmos.color = Color.magenta;
+        Gizmos.DrawCube(transform.position + _controller.center, new Vector3(_controller.radius * 2, _controller.height, _controller.radius * 2));
+        Gizmos.DrawRay(transform.position + _controller.center, Vector3.down * SnapDist);
     }
 }
