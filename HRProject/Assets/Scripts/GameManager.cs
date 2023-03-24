@@ -10,10 +10,6 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private PlayerMotor _player;
     [SerializeField]
-    private Vector3 _startPoint;
-    [SerializeField]
-    private Quaternion _startRotation;
-    [SerializeField]
     private FadeManager _fadeManager;
     [SerializeField]
     private Counter _stageCount = new Counter(10);
@@ -24,10 +20,14 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private TMP_Text _timerText;
 
+    private Vector3 _startPoint;
+    private Quaternion _startRotation;
     private bool _timerActive = false;
 
     private void Start()
     {
+        _startPoint = _player.transform.position;
+        _startRotation = _player.transform.rotation;
         _stageCount.Reset(1);
         InitStage();
     }
@@ -55,6 +55,7 @@ public class GameManager : MonoBehaviour
         _stageTimer.Reset();
         _player.transform.position = _startPoint;
         _player.transform.rotation = _startRotation;
+        _player.ResetRot();
         StartCoroutine(LoadSceneAsync());
     }
     public void EndStage()
