@@ -31,7 +31,7 @@ public class PlayerMotor : MonoBehaviour
     private float _moveSpeed = 8.0f;
     [SerializeField]
     private float _jumpHeight = 1.5f;
-    [SerializeField]
+    [SerializeField, Tooltip("Multiplier applied to velocity when a slide is started")]
     private float _slideStrength = 1.2f;
 
     [Space(10)]
@@ -51,6 +51,8 @@ public class PlayerMotor : MonoBehaviour
     private float _wallClingStrength = 0.5f;
     [SerializeField, Range(0.0f, 1.0f)]
     private float _wallLaunchStrength = 0.5f;
+    [SerializeField]
+    private string _wallRidableTag = "Untagged";
 
     [Space(10)]
     // SnapDist is for a raycast so the player will smoothly slide down ramps
@@ -115,6 +117,7 @@ public class PlayerMotor : MonoBehaviour
     private Quaternion _rotOffset, _rotOffsetHead;
 
     private Vector3 _wallNormal;
+    private bool _potentialWallRide;
 
     private float _height;
     private float _headHeight;
@@ -296,17 +299,22 @@ public class PlayerMotor : MonoBehaviour
         {
             if ((_controller.collisionFlags & CollisionFlags.Below) != 0)
                 _currentState = PlayerState.Grounded;
-            else if ((_controller.collisionFlags & CollisionFlags.Sides) != 0)
+            else if (_potentialWallRide && (_controller.collisionFlags & CollisionFlags.Sides) != 0)
                 _currentState = PlayerState.WallRide;
             else
                 _currentState = PlayerState.InAir;
         }
 
+        _potentialWallRide = false;
         GroundCheck();
     }
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
-        _wallNormal = hit.normal;
+        if (hit.gameObject.CompareTag(_wallRidableTag))
+        {
+            _potentialWallRide = true;
+            _wallNormal = hit.normal;
+        }
     }
 
     private void GroundCheck()
