@@ -164,8 +164,8 @@ public class PlayerMotor : MonoBehaviour
         else
             vel.y += EffectiveGravity.y * Time.deltaTime;
         
-        float effectiveAccel = (_wasGrounded ? _groundAccel : _airAccel);
-        float effectiveFriction = (_wasGrounded ? _groundFriction : _airFriction);
+        float effectiveAccel = (_currentState != PlayerState.InAir ? _groundAccel : _airAccel);
+        float effectiveFriction = (_currentState != PlayerState.InAir ? _groundFriction : _airFriction);
 
         // Friction
         float keepY = vel.y;
@@ -200,6 +200,8 @@ public class PlayerMotor : MonoBehaviour
             _currentState = PlayerState.Grounded;
         else if ((_controller.collisionFlags & CollisionFlags.Sides) != 0)
             _currentState = PlayerState.WallRide;
+        else
+            _currentState = PlayerState.InAir;
 
         GroundCheck();
     }
@@ -235,8 +237,6 @@ public class PlayerMotor : MonoBehaviour
             return;
         }
 
-        if (_currentState != PlayerState.WallRide)
-            _currentState = PlayerState.InAir;
         // Set wasGrounded for next frame
         _wasGrounded = false;
     }
