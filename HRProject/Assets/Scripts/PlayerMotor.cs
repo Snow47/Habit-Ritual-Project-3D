@@ -234,7 +234,7 @@ public class PlayerMotor : MonoBehaviour
 
         // GRAVITY
         if (_currentState == PlayerState.WallRide)
-            vel.y = EffectiveGravity.y * _wallClingStrength;
+            vel.y = EffectiveGravity.y * _wallClingStrength * Time.deltaTime;
         else
             vel.y += EffectiveGravity.y * Time.deltaTime;
         
