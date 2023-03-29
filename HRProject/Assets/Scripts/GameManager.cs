@@ -14,6 +14,8 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private Counter _stageCount = new Counter(10);
     [SerializeField]
+    private string _endSceneName = "EndScene";
+    [SerializeField]
     private Timer _stageTimer = new Timer(90);
 
     [Space(10)]
@@ -53,8 +55,7 @@ public class GameManager : MonoBehaviour
     private void InitStage()
     {
         _stageTimer.Reset();
-        _player.transform.position = _startPoint;
-        _player.transform.rotation = _startRotation;
+        _player.transform.SetPositionAndRotation(_startPoint, _startRotation);
         _player.ResetRot();
         StartCoroutine(LoadSceneAsync());
     }
@@ -106,7 +107,7 @@ public class GameManager : MonoBehaviour
     {
         if (_stageCount.Check())
         {
-            // TODO: Game Complete
+            SceneManager.LoadScene(_endSceneName);
         }
 
         InitStage();

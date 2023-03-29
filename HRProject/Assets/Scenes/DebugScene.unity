@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 1.7601604, g: 1.83498, b: 3.1065216, a: 1}
+  m_IndirectSpecularColor: {r: 1.7545915, g: 1.8366594, b: 3.1398087, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -27926,13 +27926,16 @@ MonoBehaviour:
       m_Action: Slide
       m_Flags: 0
   _lockplayerController: 0
-  _moveSpeed: 8
+  _moveSpeed: 15
   _jumpHeight: 1.5
+  _groundAccelRamping:
+    max: 2
   _slideStrength: 1.5
-  _groundAccel: 75
+  _groundAccel: {x: 50, y: 75}
   _airAccel: 35
   _groundFriction: 7
-  _airFriction: 1
+  _airFriction: 3
+  _slideFricion: 1
   _wallClingStrength: 0.5
   _wallLaunchStrength: 0.5
   _wallRidableTag: Jumpable

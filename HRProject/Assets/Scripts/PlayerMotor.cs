@@ -28,23 +28,27 @@ public class PlayerMotor : MonoBehaviour
     [Header("Move Variables")]
     // How fast the player moves
     [SerializeField, Tooltip("Player max speed")]
-    private float _moveSpeed = 8.0f;
+    private float _moveSpeed = 10.0f;
     [SerializeField]
     private float _jumpHeight = 1.5f;
+    [SerializeField, Tooltip("How long it takes to reach full ramping")]
+    private Timer _groundAccelRamping = new Timer(2);
     [SerializeField, Tooltip("Multiplier applied to velocity when a slide is started")]
     private float _slideStrength = 1.2f;
 
-    [Space(10)]
-    [SerializeField, Tooltip("How fast the player moves")]
-    private float _groundAccel = 200.0f;
-    [SerializeField, Tooltip("How fast the player moves")]
+    [Header("Acceleration")]
+    [SerializeField, Tooltip("How fast the moves on the ground. x is normal, y is fully ramped")]
+    private Vector2 _groundAccel = new Vector2(50.0f, 75.0f);
+    [SerializeField, Tooltip("How fast the player moves in the air")]
     private float _airAccel = 50.0f;
 
-    [Space(10)]
+    [Header("Friction")]
     [SerializeField]
     private float _groundFriction = 12.0f;
     [SerializeField]
     private float _airFriction = 3.0f;
+    [SerializeField]
+    private float _slideFricion = 1.0f;
 
     [Space(10)]
     [SerializeField]
@@ -56,7 +60,7 @@ public class PlayerMotor : MonoBehaviour
 
     [Space(10)]
     // SnapDist is for a raycast so the player will smoothly slide down ramps
-    [SerializeField, Tooltip("When the player stops touching the ground for a frame they will attempt to snap to any object that is this many units below theeir feet")]
+    [SerializeField, Tooltip("When the player stops touching the ground for a frame they will attempt to snap to any object that is this many units below their feet")]
     private float _snapDist = .5f;
     [SerializeField]
     private Vector3 _gravityScale = Vector3.up;
@@ -81,7 +85,6 @@ public class PlayerMotor : MonoBehaviour
 
     // Only needed if you need to access the head from another script and don't want to assign to there as well
     public Transform Head => _head;
-    public float MoveSpeed { set => _groundAccel = value; }
     public float MouseSenMod { set => _mouseSenMod = value; }
     public bool LockPlayer 
     { 
@@ -237,20 +240,12 @@ public class PlayerMotor : MonoBehaviour
             vel.y = EffectiveGravity.y * _wallClingStrength * Time.deltaTime;
         else
             vel.y += EffectiveGravity.y * Time.deltaTime;
-        
-        float effectiveFriction;
-        switch (_currentState)
+        float effectiveFriction = _currentState switch
         {
-            default:
-            case PlayerState.WallRide:
-            case PlayerState.Grounded:
-                effectiveFriction = _groundFriction;
-                break;
-            case PlayerState.Sliding:
-            case PlayerState.InAir:
-                effectiveFriction = _airFriction;
-                break;
-        }
+            PlayerState.InAir => _airFriction,
+            PlayerState.Sliding => _slideFricion,
+            _ => _groundFriction,
+        };
 
         // FRICTION
         float keepY = vel.y;
@@ -278,27 +273,54 @@ public class PlayerMotor : MonoBehaviour
 
                 // Check for speed cap
                 float velocityProj = Vector3.Dot(vel, moveWish);
-                float effectiveAccel = _currentState != PlayerState.InAir ? _groundAccel : _airAccel;
+
+                float effectiveAccel;
+                switch (_currentState)
+                {
+                    case PlayerState.Grounded when Vector3.Angle(transform.forward, moveWish) < 90.0f:
+                    case PlayerState.WallRide when Vector3.Angle(transform.forward, moveWish) < 90.0f:
+                        //print("angle: " + Vector3.Angle(transform.forward, moveWish).ToString());
+                        _groundAccelRamping.Count();
+                        effectiveAccel = Mathf.Lerp(_groundAccel.x, _groundAccel.y, _groundAccelRamping.PercentComplete);
+                        break;
+                    default:
+                    case PlayerState.Grounded:
+                    case PlayerState.WallRide:
+                        _groundAccelRamping.Reset();
+                        effectiveAccel = _groundAccel.x;
+                        break;
+                    case PlayerState.InAir:
+                        effectiveAccel = _airAccel;
+                        break;
+                }
+
                 float accelMag = effectiveAccel * Time.deltaTime;
                 // Clamp projection onto movement vector
                 if (velocityProj + accelMag > _moveSpeed)
                 {
+                    _groundAccelRamping.Reset();
                     accelMag = _moveSpeed - velocityProj;
                 }
 
                 // Apply movement
                 vel += moveWish * accelMag;
             }
+            else
+                _groundAccelRamping.Reset();
         }
 
         // MOVE
-        _controller.Move(vel * Time.deltaTime);
+        print("current velocity: " + vel.magnitude);
+        _controller.Move((vel * Time.deltaTime) + GroundCheck());
 
         // SET STATE
         if(_currentState != PlayerState.Sliding)
         {
             if ((_controller.collisionFlags & CollisionFlags.Below) != 0)
+            {
+                _wasGrounded = true;
                 _currentState = PlayerState.Grounded;
+            }
             else if (_potentialWallRide && (_controller.collisionFlags & CollisionFlags.Sides) != 0)
                 _currentState = PlayerState.WallRide;
             else
@@ -306,7 +328,6 @@ public class PlayerMotor : MonoBehaviour
         }
 
         _potentialWallRide = false;
-        GroundCheck();
     }
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
@@ -317,17 +338,10 @@ public class PlayerMotor : MonoBehaviour
         }
     }
 
-    private void GroundCheck()
+    private Vector3 GroundCheck()
     {
-        // If you are grounded reset yVel and set wasGrounded for next frame
-        if (_currentState == PlayerState.Grounded)
-        {
-            _wasGrounded = true;
-            return;
-        }
-
         // If the player is not grounded but was last frame do a Raycast and if it hits something snap to that thing
-        if (_wasGrounded && _currentState != PlayerState.Sliding && Physics.Raycast(transform.position + _controller.center, Vector3.down, out RaycastHit hit, SnapDist))
+        if (_wasGrounded && Physics.Raycast(transform.position + _controller.center, Vector3.down, out RaycastHit hit, SnapDist))
         {
             // Get the distance you have to travel to be snapped to the ground
             float snapAmount = Vector3.Distance(hit.point, transform.position + _controller.center);
@@ -336,16 +350,15 @@ public class PlayerMotor : MonoBehaviour
             // Convert the amount you have to move movement to a velocity scaler
             snapAmount /= Time.deltaTime;
 
-            _controller.Move(Vector3.down * snapAmount);
-
-            //if(_currentState != PlayerState.Sliding)
+            if (_currentState != PlayerState.Sliding)
                 _currentState = PlayerState.Grounded;
 
-            return;
+            return Vector3.down * snapAmount;
         }
 
         // Set wasGrounded for next frame
         _wasGrounded = false;
+        return Vector3.zero;
     }
 
     private void Look()
