@@ -68,7 +68,7 @@ public class PlayerSFX : MonoBehaviour
                 walkSFXtimer += Time.deltaTime;
             }else if (walkSFXtimer >= walkSFXInterval)
             {
-                asource.Stop();
+                //asource.Stop();
                 asource.Play();
                 walkSFXtimer = 0;
             }
