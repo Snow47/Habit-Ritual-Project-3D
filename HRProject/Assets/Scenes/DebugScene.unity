@@ -27977,6 +27977,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   walkingSFX: {fileID: 8300000, guid: 85a7bfe89b0e71449abe997dc3ee2276, type: 3}
   walkSFXInterval: 0.3
+  speedThreshold: 7
+  isWalking: 0
+  gotToHighSpeed: 0
 --- !u!1001 &2040015406
 PrefabInstance:
   m_ObjectHideFlags: 0
