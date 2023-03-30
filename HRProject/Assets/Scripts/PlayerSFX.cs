@@ -10,7 +10,7 @@ public class PlayerSFX : MonoBehaviour
     private AudioClip walkingSFX, slidingSFX;
 
     [SerializeField]
-    private AudioSource asource;
+    private AudioSource asource, slide_asource;
 
     string playstate;
 
@@ -64,6 +64,10 @@ public class PlayerSFX : MonoBehaviour
                 isWalking = false;
                 isSliding = true;
             }
+            if (playstate != "Grounded")
+            {
+                isWalking = false;
+            }
         }
         else
         {
@@ -91,9 +95,12 @@ public class PlayerSFX : MonoBehaviour
         {
             if (!playedSlide)
             {
-                asource.PlayOneShot(slidingSFX, asource.volume);
+                slide_asource.PlayOneShot(slidingSFX, slide_asource.volume);
                 playedSlide = true;
             }
+        }else
+        {
+            slide_asource.Stop();
         }
     }
 }
