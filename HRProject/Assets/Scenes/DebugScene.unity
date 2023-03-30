@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 1.7601604, g: 1.8349934, b: 3.1064835, a: 1}
+  m_IndirectSpecularColor: {r: 1.7601604, g: 1.8349667, b: 3.1065063, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -28238,6 +28238,7 @@ MonoBehaviour:
   walkSFXInterval: 0.2
   speedThreshold: 7
   slideSpeedThreshold: 0
+  slideFadeOutTime: 0.25
 --- !u!1001 &2040015406
 PrefabInstance:
   m_ObjectHideFlags: 0

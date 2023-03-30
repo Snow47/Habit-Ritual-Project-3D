@@ -18,15 +18,16 @@ public class PlayerSFX : MonoBehaviour
     public float walkSFXInterval;
 
     //Lower threshold for if the walking sfx will play after player lets go of WASD, will be obsolete if raw WASD input can be read at some point
-    public float speedThreshold, slideSpeedThreshold;
+    public float speedThreshold, slideSpeedThreshold, slideFadeOutTime;
 
-    float walkSFXtimer = 0;
+    float walkSFXtimer = 0, slideFadeOutTimer = 0;
     bool isWalking = false, isSliding = false, gotToHighSpeed = false, gotToHighSlide = false, playedSlide = false;
     // Start is called before the first frame update
     void Start()
     {
         motor = GetComponent<PlayerMotor>();
         asource.clip = walkingSFX;
+        slide_asource.clip = slidingSFX;
         walkSFXtimer = 0;
     }
 
@@ -93,14 +94,18 @@ public class PlayerSFX : MonoBehaviour
         }
         if (isSliding)
         {
+            slideFadeOutTimer = slideFadeOutTime;
             if (!playedSlide)
             {
-                slide_asource.PlayOneShot(slidingSFX, slide_asource.volume);
+                slide_asource.PlayOneShot(slidingSFX, 1);
                 playedSlide = true;
             }
         }else
         {
-            slide_asource.Stop();
+            slideFadeOutTimer -= Time.deltaTime;
         }
+        float newvol = (slideFadeOutTimer / slideFadeOutTime);
+        slide_asource.volume = newvol;
+        Debug.Log(newvol);
     }
 }
