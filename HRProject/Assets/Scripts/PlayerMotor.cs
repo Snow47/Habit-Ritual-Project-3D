@@ -147,7 +147,6 @@ public class PlayerMotor : MonoBehaviour
         _mouseSenMod = PlayerPrefs.GetFloat("Player.LookSensitivity", 1.0f);
 
         _inputMap["Jump"].performed += AttemptJump;
-        _inputMap["Jump"].performed += Test;
         _inputMap["Slide"].started += AttemptSlide;
         _inputMap["Slide"].canceled += AttemptSlideEnd;
     }
@@ -161,10 +160,6 @@ public class PlayerMotor : MonoBehaviour
         Look();
     }
 
-    private void Test(InputAction.CallbackContext context)
-    {
-        print("huh");
-    }
     private void AttemptJump(InputAction.CallbackContext context)
     {
         if (_currentState == PlayerState.InAir)
