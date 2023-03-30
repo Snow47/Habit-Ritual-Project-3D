@@ -11,22 +11,24 @@ public class FadeManager : MonoBehaviour
     [SerializeField]
     private Timer _fadeLength = new Timer(0.5f);
 
-    public void FadeIn(Action callback)
+    public void FadeIn(Action callback, float fadeDur)
     {
         _fadeImage.gameObject.SetActive(true);
+        _fadeLength.SetMax(fadeDur, true);
         StartCoroutine(PerformFade(true, callback));
     }
-    public void FadeOut(Action callback)
+    public Coroutine FadeOut(Action callback, float fadeDur)
     {
         _fadeImage.gameObject.SetActive(true);
-        StartCoroutine(PerformFade(false, callback));
+        _fadeLength.SetMax(fadeDur, true);
+        return StartCoroutine(PerformFade(false, callback));
     }
 
     private IEnumerator PerformFade(bool fadeIn, Action callback)
     {
         Color tmpColor = _fadeImage.color;
 
-        while (!_fadeLength.Check())
+        while (!_fadeLength.Check(false))
         {
             float increment = fadeIn ? 1.0f - _fadeLength.PercentComplete : _fadeLength.PercentComplete;
 

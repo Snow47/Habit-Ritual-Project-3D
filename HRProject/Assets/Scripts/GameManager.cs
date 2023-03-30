@@ -17,6 +17,8 @@ public class GameManager : MonoBehaviour
     private string _endSceneName = "EndScene";
     [SerializeField]
     private Timer _stageTimer = new Timer(90);
+    [SerializeField]
+    private float _failFadeDur = 5.0f;
 
     [Space(10)]
     [SerializeField]
@@ -25,6 +27,10 @@ public class GameManager : MonoBehaviour
     private Vector3 _startPoint;
     private Quaternion _startRotation;
     private bool _timerActive = false;
+
+    private float _fadeDur = 0.5f;
+    private bool _hasFailed = false;
+    private Coroutine _failFadeRoutine;
 
     private void Start()
     {
@@ -41,7 +47,9 @@ public class GameManager : MonoBehaviour
             {
                 // TODO: Game Over
                 _timerActive = false;
-                EndStage();
+                _hasFailed = true;
+                _stageCount.Count(-1);
+                _failFadeRoutine = _fadeManager.FadeOut(Unload, _failFadeDur);
             }
         }
 
@@ -66,9 +74,15 @@ public class GameManager : MonoBehaviour
     }
     public void EndStage()
     {
+        if (_hasFailed)
+        {
+            StopCoroutine(_failFadeRoutine);
+            _stageCount.Count();
+        }
+
         _timerActive = false;
         _player.LockPlayer = true;
-        _fadeManager.FadeOut(Unload);
+        _fadeManager.FadeOut(Unload, _fadeDur);
     }
 
     private IEnumerator LoadSceneAsync()
@@ -96,7 +110,7 @@ public class GameManager : MonoBehaviour
 
     private void StartFade()
     {
-        _fadeManager.FadeIn(StartStage);
+        _fadeManager.FadeIn(StartStage, _fadeDur);
     }
     private void Unload()
     {
