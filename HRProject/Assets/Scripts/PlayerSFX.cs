@@ -69,7 +69,7 @@ public class PlayerSFX : MonoBehaviour
             }else if (walkSFXtimer >= walkSFXInterval)
             {
                 //asource.Stop();
-                asource.Play();
+                asource.PlayOneShot(asource.clip, asource.volume);
                 walkSFXtimer = 0;
             }
         }
