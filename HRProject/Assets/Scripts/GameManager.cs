@@ -74,10 +74,7 @@ public class GameManager : MonoBehaviour
         _player.transform.SetPositionAndRotation(_startPoint, _startRotation);
         _player.ResetMotor();
 
-        if (_stageCount.AmountRemaining != 1.0f)
-            StartCoroutine(LoadSceneAsync());
-        else
-            StartFade();
+        StartCoroutine(LoadSceneAsync());
     }
     public void EndStage()
     {
