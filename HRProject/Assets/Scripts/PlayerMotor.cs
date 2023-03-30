@@ -251,6 +251,7 @@ public class PlayerMotor : MonoBehaviour
             vel.y = EffectiveGravity.y * _wallClingStrength * Time.deltaTime;
         else
             vel.y += EffectiveGravity.y * Time.deltaTime;
+
         float effectiveFriction = _currentState switch
         {
             PlayerState.InAir => _airFriction,
