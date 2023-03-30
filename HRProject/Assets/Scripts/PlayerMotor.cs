@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
 public class PlayerMotor : MonoBehaviour
@@ -83,14 +84,18 @@ public class PlayerMotor : MonoBehaviour
     [SerializeField]
     private bool _debug = false;
 
-    // Only needed if you need to access the head from another script and don't want to assign to there as well
-    public Transform Head => _head;
     public float MouseSenMod { set => _mouseSenMod = value; }
     public bool LockPlayer 
     { 
         get => _lockplayerController; 
         set => _lockplayerController = value; 
     }
+
+    public bool IsOnGround => _currentState == PlayerState.Grounded;
+    public float CurrentSpeed => _currentSpeed;
+    public UnityEvent OnJumpPress => _onJumpPress;
+    public UnityEvent OnSlideBegin => _onSlideBegin;
+    public UnityEvent OnSlideEnd => _onSlideEnd;
 
     private float SnapDist => (_controller.height / 2.0f) + _snapDist;
     private Vector3 EffectiveGravity
@@ -105,7 +110,10 @@ public class PlayerMotor : MonoBehaviour
     private float SlideHeight => _controller.radius * 2;
 
     private PlayerState _currentState = PlayerState.Grounded;
-
+    private float _currentSpeed = 0;
+    private UnityEvent _onJumpPress = new UnityEvent();
+    private UnityEvent _onSlideBegin = new UnityEvent();
+    private UnityEvent _onSlideEnd = new UnityEvent();
     // Important for falling
     //private float _yVel = 0.0f;
     // For ground snapping
@@ -139,6 +147,7 @@ public class PlayerMotor : MonoBehaviour
         _mouseSenMod = PlayerPrefs.GetFloat("Player.LookSensitivity", 1.0f);
 
         _inputMap["Jump"].performed += AttemptJump;
+        _inputMap["Jump"].performed += Test;
         _inputMap["Slide"].started += AttemptSlide;
         _inputMap["Slide"].canceled += AttemptSlideEnd;
     }
@@ -152,6 +161,10 @@ public class PlayerMotor : MonoBehaviour
         Look();
     }
 
+    private void Test(InputAction.CallbackContext context)
+    {
+        print("huh");
+    }
     private void AttemptJump(InputAction.CallbackContext context)
     {
         if (_currentState == PlayerState.InAir)
@@ -190,6 +203,7 @@ public class PlayerMotor : MonoBehaviour
         vel.y = keepY;
 
         _controller.Move(vel * Time.deltaTime);
+        _onSlideBegin.Invoke();
     }
     private void AttemptSlideEnd(InputAction.CallbackContext context)
     {
@@ -214,6 +228,8 @@ public class PlayerMotor : MonoBehaviour
             _currentState = PlayerState.WallRide;
         else
             _currentState = PlayerState.InAir;
+
+        _onSlideEnd.Invoke();
     }
 
     private void Move()
@@ -224,6 +240,8 @@ public class PlayerMotor : MonoBehaviour
         if (_jumpWish)
         {
             _jumpWish = false;
+
+            _onJumpPress.Invoke();
 
             float jump = Mathf.Sqrt(-2.0f * EffectiveGravity.y * _jumpHeight);
             vel.y = jump;
@@ -310,7 +328,8 @@ public class PlayerMotor : MonoBehaviour
         }
 
         // MOVE
-        print("current velocity: " + vel.magnitude);
+        _currentSpeed = vel.magnitude;
+        //print("current velocity: " + _currentSpeed);
         _controller.Move((vel * Time.deltaTime) + GroundCheck());
 
         // SET STATE
