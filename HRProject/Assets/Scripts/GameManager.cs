@@ -10,6 +10,8 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private PlayerMotor _player;
     [SerializeField]
+    private Transform _flowerParent;
+    [SerializeField]
     private FadeManager _fadeManager;
     [SerializeField]
     private Counter _stageCount = new Counter(10);
@@ -25,7 +27,7 @@ public class GameManager : MonoBehaviour
     private TMP_Text _timerText;
 
     private Vector3 _startPoint;
-    private Quaternion _startRotation;
+    private Quaternion _startRotation, _headRotation;
     private bool _timerActive = false;
 
     private float _fadeDur = 0.5f;
@@ -36,6 +38,7 @@ public class GameManager : MonoBehaviour
     {
         _startPoint = _player.transform.position;
         _startRotation = _player.transform.rotation;
+        _headRotation = _player.Head.localRotation;
         _stageCount.Reset(1);
         InitStage();
     }
@@ -68,8 +71,9 @@ public class GameManager : MonoBehaviour
     private void InitStage()
     {
         _stageTimer.Reset();
-        _player.transform.SetPositionAndRotation(_startPoint, _startRotation);
-        _player.ResetRot();
+        
+        _player.ResetMotor(_startPoint, _startRotation, _headRotation);
+
         StartCoroutine(LoadSceneAsync());
     }
     public void EndStage()
@@ -79,6 +83,8 @@ public class GameManager : MonoBehaviour
             StopCoroutine(_failFadeRoutine);
             _stageCount.Count();
         }
+
+        _flowerParent.GetChild((int)_stageCount.Cur - 1).gameObject.SetActive(true);
 
         _timerActive = false;
         _player.LockPlayer = true;
@@ -127,6 +133,7 @@ public class GameManager : MonoBehaviour
         if (_stageCount.Check())
         {
             SceneManager.LoadScene(_endSceneName);
+            return;
         }
 
         InitStage();
