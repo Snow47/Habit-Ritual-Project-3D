@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 1.2318268, g: 1.2843809, b: 2.17445, a: 1}
+  m_IndirectSpecularColor: {r: 1.2318258, g: 1.2843771, b: 2.1743965, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -68207,7 +68207,7 @@ MonoBehaviour:
   _flowerParent: {fileID: 1874273861}
   _fadeManager: {fileID: 1110147779}
   _stageCount:
-    max: 10
+    max: 7
   _endSceneName: EndScene
   _stageTimer:
     max: 90
