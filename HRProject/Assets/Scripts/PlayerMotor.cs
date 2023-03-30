@@ -1,17 +1,15 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
-
+public enum PlayerState
+{
+    Grounded,
+    InAir,
+    WallRide,
+    Sliding
+}
 public class PlayerMotor : MonoBehaviour
 {
-    private enum PlayerState
-    {
-        Grounded,
-        InAir,
-        WallRide,
-        Sliding
-    }
-
     // The CharacterController simply moves the player with repects to collision, this is Kinematic Movement as it will collide with objects but not react to forces
     [SerializeField, Tooltip("This is the player's \"body\", it does the moving while respecting collision")]
     private CharacterController _controller;
@@ -91,7 +89,7 @@ public class PlayerMotor : MonoBehaviour
         set => _lockplayerController = value; 
     }
 
-    public bool IsOnGround => _currentState == PlayerState.Grounded;
+    public PlayerState CurrentState => _currentState;
     public float CurrentSpeed => _currentSpeed;
     public UnityEvent OnJumpPress => _onJumpPress;
     public UnityEvent OnSlideBegin => _onSlideBegin;
@@ -323,7 +321,7 @@ public class PlayerMotor : MonoBehaviour
         }
 
         // MOVE
-        _currentSpeed = vel.magnitude;
+        _currentSpeed = Mathf.Sqrt((vel.x * vel.x) + (vel.z * vel.z));
         //print("current velocity: " + _currentSpeed);
         _controller.Move((vel * Time.deltaTime) + GroundCheck());
 
