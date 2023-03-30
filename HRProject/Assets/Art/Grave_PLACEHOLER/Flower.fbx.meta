@@ -3,7 +3,22 @@ guid: db700a8b449171a4a8827d235ae16a86
 ModelImporter:
   serializedVersion: 20300
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Flower-tulip  stalk.001
+    second: {fileID: 2100000, guid: 9f769c03adce18a4792159937c769762, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Flower-tulip Leaves.001
+    second: {fileID: 2100000, guid: 9f769c03adce18a4792159937c769762, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Flower-tulip Petals.001
+    second: {fileID: 2100000, guid: 0741e78ac0bce0e4fae12c0a276a92c6, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -34,7 +49,7 @@ ModelImporter:
     isReadable: 0
   meshes:
     lODScreenPercentages: []
-    globalScale: 1
+    globalScale: 100
     meshCompression: 0
     addColliders: 0
     useSRGBMaterialColor: 1

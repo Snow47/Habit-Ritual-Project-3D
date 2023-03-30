@@ -10,6 +10,8 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private PlayerMotor _player;
     [SerializeField]
+    private Transform _flowerParent;
+    [SerializeField]
     private FadeManager _fadeManager;
     [SerializeField]
     private Counter _stageCount = new Counter(10);
@@ -68,9 +70,14 @@ public class GameManager : MonoBehaviour
     private void InitStage()
     {
         _stageTimer.Reset();
+        
         _player.transform.SetPositionAndRotation(_startPoint, _startRotation);
-        _player.ResetRot();
-        StartCoroutine(LoadSceneAsync());
+        _player.ResetMotor();
+
+        if (_stageCount.AmountRemaining != 1.0f)
+            StartCoroutine(LoadSceneAsync());
+        else
+            StartFade();
     }
     public void EndStage()
     {
@@ -79,6 +86,8 @@ public class GameManager : MonoBehaviour
             StopCoroutine(_failFadeRoutine);
             _stageCount.Count();
         }
+
+        _flowerParent.GetChild((int)_stageCount.Cur - 1).gameObject.SetActive(true);
 
         _timerActive = false;
         _player.LockPlayer = true;

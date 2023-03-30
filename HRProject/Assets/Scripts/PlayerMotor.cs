@@ -393,12 +393,14 @@ public class PlayerMotor : MonoBehaviour
     }
 
     // Simple code for when you set the rotation of the player using other code
-    public void ResetRot()
+    public void ResetMotor()
     {
         _lookVel = new Vector2();
         _lookPos = new Vector2();
         _rotOffset = transform.rotation;
         _rotOffsetHead = _head.transform.localRotation;
+
+        _controller.Move(Vector3.zero);
     }
     private void OnEnable()
     {
