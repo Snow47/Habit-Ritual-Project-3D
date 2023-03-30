@@ -133,6 +133,7 @@ public class GameManager : MonoBehaviour
         if (_stageCount.Check())
         {
             SceneManager.LoadScene(_endSceneName);
+            return;
         }
 
         InitStage();
