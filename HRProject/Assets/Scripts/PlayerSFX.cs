@@ -5,8 +5,13 @@ using UnityEngine;
 public class PlayerSFX : MonoBehaviour
 {
     PlayerMotor motor;
-    public AudioClip walkingSFX;
-    AudioSource asource;
+
+    [SerializeField]
+    private AudioClip walkingSFX;
+
+    [SerializeField]
+    private AudioSource asource;
+
     string playstate;
 
     //Interval in seconds for how often the walking sfx plays
@@ -16,12 +21,11 @@ public class PlayerSFX : MonoBehaviour
     public float speedThreshold;
 
     float walkSFXtimer = 0;
-    public bool isWalking = false, gotToHighSpeed = false;
+    bool isWalking = false, gotToHighSpeed = false;
     // Start is called before the first frame update
     void Start()
     {
         motor = GetComponent<PlayerMotor>();
-        asource = GetComponentInChildren<AudioSource>();
         asource.clip = walkingSFX;
         walkSFXtimer = 0;
     }
