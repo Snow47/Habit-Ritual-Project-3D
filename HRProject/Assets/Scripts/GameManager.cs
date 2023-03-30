@@ -40,6 +40,8 @@ public class GameManager : MonoBehaviour
             if (_stageTimer.Check())
             {
                 // TODO: Game Over
+                _timerActive = false;
+                EndStage();
             }
         }
 
@@ -48,7 +50,10 @@ public class GameManager : MonoBehaviour
             int mins = (int)_stageTimer.AmountRemaining / 60;
             int secs = (int)_stageTimer.AmountRemaining % 60;
 
-            _timerText.text = (mins > 0 ? mins.ToString() + ":" : "") + secs.ToString("00");
+            string text = (mins > 0 ? mins.ToString() + ":" : "");
+            text += secs.ToString(mins > 0 ? "00" : "#0");
+
+            _timerText.text = text;
         }
     }
 
