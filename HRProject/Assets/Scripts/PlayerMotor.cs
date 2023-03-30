@@ -52,7 +52,7 @@ public class PlayerMotor : MonoBehaviour
     [Space(10)]
     [SerializeField]
     private float _wallClingStrength = 0.5f;
-    [SerializeField, Range(0.0f, 1.0f)]
+    [SerializeField]
     private float _wallLaunchStrength = 0.5f;
     [SerializeField]
     private string _wallRidableTag = "Untagged";
@@ -82,6 +82,7 @@ public class PlayerMotor : MonoBehaviour
     [SerializeField]
     private bool _debug = false;
 
+    public Transform Head => _head;
     public float MouseSenMod { set => _mouseSenMod = value; }
     public bool LockPlayer 
     { 
@@ -160,17 +161,17 @@ public class PlayerMotor : MonoBehaviour
 
     private void AttemptJump(InputAction.CallbackContext context)
     {
-        if (_currentState == PlayerState.InAir)
+        if (_currentState == PlayerState.InAir || _lockplayerController)
             return;
 
         if (_currentState == PlayerState.Sliding)
-            AttemptSlideEnd(context);
+            AttemptSlideEnd();
 
         _jumpWish = true;
     }
     private void AttemptSlide(InputAction.CallbackContext context)
     {
-        if (_currentState != PlayerState.Grounded)
+        if (_currentState != PlayerState.Grounded || _lockplayerController)
             return;
 
         // Begin slide
@@ -203,6 +204,10 @@ public class PlayerMotor : MonoBehaviour
         if (_currentState != PlayerState.Sliding)
             return;
 
+        AttemptSlideEnd();
+    }
+    private void AttemptSlideEnd()
+    {
         // End Slide
         // Adjust heights
         _controller.height = _height;
@@ -393,14 +398,22 @@ public class PlayerMotor : MonoBehaviour
     }
 
     // Simple code for when you set the rotation of the player using other code
-    public void ResetMotor()
+    public void ResetMotor(Vector3 position, Quaternion rotation, Quaternion headRotation)
     {
+        if (_currentState == PlayerState.Sliding)
+            AttemptSlideEnd();
+
+        transform.rotation = rotation;
+        _head.localRotation = headRotation;
+
         _lookVel = new Vector2();
         _lookPos = new Vector2();
         _rotOffset = transform.rotation;
         _rotOffsetHead = _head.transform.localRotation;
 
         _controller.Move(Vector3.zero);
+
+        transform.position = position;
     }
     private void OnEnable()
     {

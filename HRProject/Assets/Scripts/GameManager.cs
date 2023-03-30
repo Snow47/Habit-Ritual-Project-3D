@@ -27,7 +27,7 @@ public class GameManager : MonoBehaviour
     private TMP_Text _timerText;
 
     private Vector3 _startPoint;
-    private Quaternion _startRotation;
+    private Quaternion _startRotation, _headRotation;
     private bool _timerActive = false;
 
     private float _fadeDur = 0.5f;
@@ -38,6 +38,7 @@ public class GameManager : MonoBehaviour
     {
         _startPoint = _player.transform.position;
         _startRotation = _player.transform.rotation;
+        _headRotation = _player.Head.localRotation;
         _stageCount.Reset(1);
         InitStage();
     }
@@ -71,8 +72,7 @@ public class GameManager : MonoBehaviour
     {
         _stageTimer.Reset();
         
-        _player.transform.SetPositionAndRotation(_startPoint, _startRotation);
-        _player.ResetMotor();
+        _player.ResetMotor(_startPoint, _startRotation, _headRotation);
 
         StartCoroutine(LoadSceneAsync());
     }
@@ -133,6 +133,7 @@ public class GameManager : MonoBehaviour
         if (_stageCount.Check())
         {
             SceneManager.LoadScene(_endSceneName);
+            return;
         }
 
         InitStage();
