@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 1.2318258, g: 1.2843771, b: 2.1743965, a: 1}
+  m_IndirectSpecularColor: {r: 1.225709, g: 1.2866926, b: 2.214367, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -68337,7 +68337,7 @@ MonoBehaviour:
     max: 7
   _endSceneName: EndScene
   _stageTimer:
-    max: 90
+    max: 60
   _failFadeDur: 5
   _timerText: {fileID: 70180451}
 --- !u!4 &1110147781
