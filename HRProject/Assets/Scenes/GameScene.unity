@@ -68334,7 +68334,7 @@ MonoBehaviour:
   _flowerParent: {fileID: 1874273861}
   _fadeManager: {fileID: 1110147779}
   _stageCount:
-    max: 7
+    max: 5
   _endSceneName: EndScene
   _stageTimer:
     max: 60
