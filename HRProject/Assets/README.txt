@@ -12,7 +12,7 @@ Bark Texture= https://maxtree.org/product-category/quality/high-poly/page/2/
 
 Dev Team Credits:
 
-Programmer = Jarod 
-3D modeler = Gareth 
+Programmer = Jarod Huber
+3D modeler = Gareth Brewer
 Level Designer: Aidan Neumann
 Sound Design & Background Music Composition - Ben Martinson
