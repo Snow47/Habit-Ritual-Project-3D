@@ -17,11 +17,15 @@ public class FadeManager : MonoBehaviour
         _fadeLength.SetMax(fadeDur, true);
         StartCoroutine(PerformFade(true, callback));
     }
-    public Coroutine FadeOut(Action callback, float fadeDur)
+    public IEnumerator FadeOut(Action callback, float fadeDur)
     {
         _fadeImage.gameObject.SetActive(true);
         _fadeLength.SetMax(fadeDur, true);
-        return StartCoroutine(PerformFade(false, callback));
+
+        IEnumerator toReturn = PerformFade(false, callback);
+
+        StartCoroutine(toReturn);
+        return toReturn;
     }
     public void FadeIn()
     {
@@ -30,12 +34,15 @@ public class FadeManager : MonoBehaviour
 
         StartCoroutine(PerformFade(true, EmptyCall));
     }
-    public Coroutine FadeOut()
+    public IEnumerator FadeOut()
     {
         _fadeImage.gameObject.SetActive(true);
         _fadeLength.Reset();
 
-        return StartCoroutine(PerformFade(false, EmptyCall));
+        IEnumerator toReturn = PerformFade(false, EmptyCall);
+
+        StartCoroutine(toReturn);
+        return toReturn;
     }
 
     private IEnumerator PerformFade(bool fadeIn, Action callback)

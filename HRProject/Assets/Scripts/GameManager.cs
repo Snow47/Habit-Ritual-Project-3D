@@ -32,7 +32,7 @@ public class GameManager : MonoBehaviour
 
     private float _fadeDur = 0.5f;
     private bool _hasFailed = false;
-    private Coroutine _failFadeRoutine;
+    private IEnumerator _failFadeRoutine;
 
     private void Start()
     {
@@ -46,12 +46,11 @@ public class GameManager : MonoBehaviour
     {
         if (_timerActive)
         {
-            if (_stageTimer.Check())
+            if (_stageTimer.Check(false))
             {
                 // TODO: Game Over
                 _timerActive = false;
                 _hasFailed = true;
-                _stageCount.Count(-1);
                 _failFadeRoutine = _fadeManager.FadeOut(Unload, _failFadeDur);
             }
         }
@@ -80,8 +79,8 @@ public class GameManager : MonoBehaviour
     {
         if (_hasFailed)
         {
+            _hasFailed = false;
             StopCoroutine(_failFadeRoutine);
-            _stageCount.Count();
         }
 
         _flowerParent.GetChild((int)_stageCount.Cur - 1).gameObject.SetActive(true);
@@ -121,6 +120,13 @@ public class GameManager : MonoBehaviour
     private void Unload()
     {
         StartCoroutine(UnloadSceneAsync());
+
+        if (_hasFailed)
+        {
+            _hasFailed = false;
+            _stageCount.Count(-1);
+            _player.LockPlayer = true;
+        }
     }
 
     private void StartStage()
