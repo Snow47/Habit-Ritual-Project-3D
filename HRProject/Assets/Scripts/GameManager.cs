@@ -52,7 +52,7 @@ public class GameManager : MonoBehaviour
                 _timerActive = false;
                 _hasFailed = true;
                 _failFadeRoutine = _fadeManager.FadeOut(Unload, _failFadeDur);
-            }
+            }  
         }
 
         if (_timerText != null)

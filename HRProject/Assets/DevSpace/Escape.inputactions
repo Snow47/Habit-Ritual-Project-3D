@@ -1,0 +1,34 @@
+{
+    "name": "Escape",
+    "maps": [
+        {
+            "name": "Escape",
+            "id": "121f865a-0920-4414-8043-ce1455e3e8da",
+            "actions": [
+                {
+                    "name": "Pressed Escape",
+                    "type": "Button",
+                    "id": "d2a463ae-61c3-429f-9620-3aac52afdeb7",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "e1c2c485-38b7-4f07-98cb-5229c5752235",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Pressed Escape",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
